@@ -1,9 +1,15 @@
+import os
 from fabric.api import local, run, sudo, env, cd
 from fabric.contrib import files
 
-env.hosts = [
-    'root@167.172.145.174',
-]
+from project import env as django_env
+
+env.hosts = django_env.FAB_HOSTS
+ROOT = django_env.FAB_ROOT
+PROJECT_NAME = 'django-webpack-template'
+PROJECT_PATH = os.path.join(ROOT, PROJECT_NAME)
+VENV_PATH = os.path.join(PROJECT_PATH, 'venv')
+GIT_REPO = django_env.FAB_GIT_REPO
 
 
 def install_packages():
@@ -13,50 +19,81 @@ def install_packages():
         'python3-venv',
         'nginx',
         'git-core',
+        'npm',
     ]
     sudo(f'apt-get install -y {" ".join(packages)}')
 
 
-def create_venv():
-    if not files.exists("/root/django-webpack-template/venv"):
-        run('python3 -m venv /root/django-webpack-template/venv')
-
-
 def install_project_code():
-    if not files.exists('django-webpack-template/.git'):
-        run('git clone https://github.com/ekbdizzy/django-webpack-template.git')
+    if not files.exists(ROOT):
+        run(f'mkdir -p {ROOT}')
+    if not files.exists(f'{PROJECT_PATH}/.gitignore'):
+        with cd('/home/root'):
+            run(f'git clone {GIT_REPO}')
     else:
-        with cd('django-webpack-template'):
+        with cd(PROJECT_PATH):
             run('git pull')
 
 
+def create_venv():
+    with cd(ROOT):
+        if not files.exists(VENV_PATH):
+            run(f'python3 -m venv {VENV_PATH}')
+
+
 def install_pip_requirements():
-    with cd('django-webpack-template'):
-        run('/root/django-webpack-template/venv/bin/pip3.6 install -r requirements.txt -U')
+    with cd(PROJECT_PATH):
+        run(f'{VENV_PATH}/bin/pip3.6 install -r requirements.txt -U')
+
+
+def npm_install():
+    with cd(PROJECT_PATH):
+        sudo('npm install')
+        run('npm run build')
 
 
 def configure_uwsgi():
-    pass
+    sudo('python3 -m pip install uwsgi')
+    sudo('mkdir -p /etc/uwsgi/sites')
+    files.upload_template('fab_templates/uwsgi.ini', '/etc/uwsgi/sites/django-webpack-template.ini', use_sudo=True)
+    files.upload_template('fab_templates/uwsgi.service', '/etc/systemd/system/uwsgi.service', use_sudo=True)
 
 
 def configure_nginx():
-    pass
+    if files.exists('/etc/nginx/sites-enabled/default'):
+        sudo('rm /etc/nginx/sites-enabled/default')
+    files.upload_template('fab_templates/nginx.conf', '/etc/nginx/sites-enabled/django-webpack-template.conf')
 
 
 def migrate_database():
-    pass
+    with cd(PROJECT_PATH):
+        run(f'{VENV_PATH}/bin/python manage.py migrate')
+
+
+def collectstatic():
+    run(f'{VENV_PATH}/bin/python manage.py collectstatic')
+
+
+def create_superuser():
+    command = 'manage.py createsuperuser --username admin --email ekbdizzy@yandex.ru'
+    run(f'{VENV_PATH}/bin/python {command}')
 
 
 def restart_all():
-    pass
+    sudo('systemctl daemon-reload')
+    sudo('systemctl reload nginx')
+    sudo('systemctl restart uwsgi')
 
 
 def bootstrap():
     install_packages()
-    create_venv()
     install_project_code()
+    create_venv()
     install_pip_requirements()
+    npm_install()
     configure_uwsgi()
     configure_nginx()
     migrate_database()
+    collectstatic()
+    create_superuser()
     restart_all()
