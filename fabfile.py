@@ -54,12 +54,6 @@ def npm_install():
         sudo('npm install')
 
 
-def npm_run_build():
-    with cd(PROJECT_PATH):
-        if files.exists('dist'):
-            run('rm -r dist')
-        run('npm run build')
-
 
 def configure_uwsgi():
     sudo('python3 -m pip install uwsgi')
@@ -85,7 +79,15 @@ def migrate_database():
 
 def collectstatic():
     with cd(PROJECT_PATH):
+        if files.exists('dist'):
+            run('rm -r dist')
         run(f'{VENV_PATH}/bin/python manage.py collectstatic -c')
+
+
+def npm_run_build():
+    with cd(PROJECT_PATH):
+        run('npm run build')
+
 
 
 def create_superuser():
@@ -106,11 +108,11 @@ def bootstrap():
     create_venv()
     install_pip_requirements()
     npm_install()
-    npm_run_build()
     configure_uwsgi()
     configure_nginx()
     create_env_config()
     migrate_database()
     collectstatic()
+    npm_run_build()
     create_superuser()
     restart_all()

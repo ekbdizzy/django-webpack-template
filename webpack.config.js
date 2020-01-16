@@ -12,7 +12,26 @@ module.exports = {
             },
             {
                 test: /\.scss$/,
-                use: ['style-loader', 'sass-loader']
+                use: [
+                    'style-loader',
+                    {
+                        loader: 'css-loader',
+                        options: {sourceMap: true}
+                    },
+                    {
+                        loader: 'postcss-loader',
+                        options: {
+                            sourceMap: true,
+                            config: {
+                                path: './postcss.config.js'
+                            }
+                        }
+                    },
+                    {
+                        loader: 'sass-loader',
+                        options: {sourceMap: true}
+                    }
+                ]
             },
         ],
     },
