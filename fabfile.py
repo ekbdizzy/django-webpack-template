@@ -75,7 +75,7 @@ def configure_nginx():
 
 
 def create_env_config():
-    files.upload_template('project/env.py', f'{PROJECT_PATH}/project/env.py')
+    files.upload_template('project/env_sample.py', f'{PROJECT_PATH}/project/env.py')
 
 
 def migrate_database():
@@ -105,8 +105,8 @@ def bootstrap():
     install_project_code()
     create_venv()
     install_pip_requirements()
-    # npm_install()
-    # npm_run_build()
+    npm_install()
+    npm_run_build()
     configure_uwsgi()
     configure_nginx()
     create_env_config()
