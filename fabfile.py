@@ -1,15 +1,18 @@
 import os
-from fabric.api import local, run, sudo, env, cd
+from fabric.api import run, sudo, env, cd
 from fabric.contrib import files
 
-from project import env as django_env
+from fab_templates import fab_config as config
 
-env.hosts = django_env.FAB_HOSTS
-ROOT = django_env.FAB_ROOT
+env.hosts = config.HOSTS
+ROOT = config.ROOT
+GIT_REPO = config.GIT_REPO
+USER_NAME = config.USER_NAME
+USER_EMAIL = config.USER_EMAIL
+
 PROJECT_NAME = 'django-webpack-template'
 PROJECT_PATH = os.path.join(ROOT, PROJECT_NAME)
 VENV_PATH = os.path.join(PROJECT_PATH, 'venv')
-GIT_REPO = django_env.FAB_GIT_REPO
 
 
 def install_packages():
@@ -49,6 +52,12 @@ def install_pip_requirements():
 def npm_install():
     with cd(PROJECT_PATH):
         sudo('npm install')
+
+
+def npm_run_build():
+    with cd(PROJECT_PATH):
+        if files.exists('dist'):
+            run('rm -r dist')
         run('npm run build')
 
 
@@ -65,18 +74,24 @@ def configure_nginx():
     files.upload_template('fab_templates/nginx.conf', '/etc/nginx/sites-enabled/django-webpack-template.conf')
 
 
+def create_env_config():
+    files.upload_template('project/env.py', f'{PROJECT_PATH}/project/env.py')
+
+
 def migrate_database():
     with cd(PROJECT_PATH):
         run(f'{VENV_PATH}/bin/python manage.py migrate')
 
 
 def collectstatic():
-    run(f'{VENV_PATH}/bin/python manage.py collectstatic')
+    with cd(PROJECT_PATH):
+        run(f'{VENV_PATH}/bin/python manage.py collectstatic -c -n')
 
 
 def create_superuser():
-    command = 'manage.py createsuperuser --username admin --email ekbdizzy@yandex.ru'
-    run(f'{VENV_PATH}/bin/python {command}')
+    with cd(PROJECT_PATH):
+        command = f'manage.py createsuperuser --username {USER_NAME} --email {USER_EMAIL}'
+        run(f'{VENV_PATH}/bin/python {command}')
 
 
 def restart_all():
@@ -90,9 +105,11 @@ def bootstrap():
     install_project_code()
     create_venv()
     install_pip_requirements()
-    npm_install()
+    # npm_install()
+    # npm_run_build()
     configure_uwsgi()
     configure_nginx()
+    create_env_config()
     migrate_database()
     collectstatic()
     create_superuser()
