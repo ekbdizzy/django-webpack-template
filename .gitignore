@@ -10,3 +10,5 @@ node_modules/
 dist/
 project/env.py
 fab_templates/fab_config.py
+
+admin/

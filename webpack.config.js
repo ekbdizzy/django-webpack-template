@@ -1,9 +1,11 @@
+const CopyWebpackPlugin = require('copy-webpack-plugin');
+
 module.exports = {
     mode: 'development',
     entry: './main/static/js/index.js',
-    // output: {
-    // publicPath: "http://127.0.0.1:8080/"
-    // },
+    output: {
+        // publicPath: "http://127.0.0.1:8080"
+    },
     module: {
         rules: [
             {
@@ -39,5 +41,19 @@ module.exports = {
         headers: {
             'Access-Control-Allow-Origin': '*'
         }
-    }
+    },
+    watch: true,
+    watchOptions: {
+        ignored: [
+            '/node_modules/'
+        ]
+    },
+
+    plugins: [
+        new CopyWebpackPlugin([
+            {from: `dist/admin`, to: `../admin`},
+        ])
+    ]
+
+
 };

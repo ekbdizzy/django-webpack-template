@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "nodemon -w webpack.config.js -x webpack-dev-server --hot",
+    "dev": "nodemon -w webpack.config.js -x webpack-dev-server --hot",
     "build": "webpack ",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -17,6 +17,7 @@
   },
   "dependencies": {
     "autoprefixer": "^9.7.4",
+    "copy-webpack-plugin": "^5.1.1",
     "css-loader": "^3.4.2",
     "cssnano": "^4.1.10",
     "mqpacker": "^7.0.0",
