@@ -75,10 +75,10 @@ USE_L10N = True
 USE_TZ = True
 
 
-if DEBUG:
-    STATICFILES_DIRS = ['dist']
-    STATIC_URL = 'http://localhost:8080/'
+# if DEBUG:
+    # STATICFILES_DIRS = ['dist']
+    # STATIC_URL = 'http://localhost:8080/'
 
-else:
-    STATIC_URL = '/dist/'
-    STATIC_ROOT = os.path.join(BASE_DIR, 'dist/')
+# else:
+STATIC_URL = '/dist/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'dist/')

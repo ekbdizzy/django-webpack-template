@@ -85,7 +85,7 @@ def migrate_database():
 
 def collectstatic():
     with cd(PROJECT_PATH):
-        run(f'{VENV_PATH}/bin/python manage.py collectstatic -c -n')
+        run(f'{VENV_PATH}/bin/python manage.py collectstatic -c')
 
 
 def create_superuser():
